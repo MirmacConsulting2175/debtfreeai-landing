@@ -4,9 +4,7 @@ import Stripe from "stripe";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-02-25.clover",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const PRICE_PREMIUM = process.env.STRIPE_PRICE_PREMIUM!;
 const PRICE_PREMIUM_PLUS = process.env.STRIPE_PRICE_PREMIUM_PLUS!;
@@ -34,7 +32,6 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ url: session.url });
-
   } catch (err) {
     console.error("Stripe checkout error:", err);
 
