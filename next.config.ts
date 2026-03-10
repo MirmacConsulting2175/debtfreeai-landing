@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
 
   experimental: {
-    serverComponentsExternalPackages: ["stripe"],
+    serverExternalPackages: ["stripe"],
   },
 };
 
