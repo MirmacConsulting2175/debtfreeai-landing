@@ -1,40 +1,68 @@
-// app/api/checkout/route.ts
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-export async function POST(req: Request) {
-
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2026-02-25.clover",
-  });
-
-}
-
-const PRICE_PREMIUM = process.env.STRIPE_PRICE_PREMIUM!;
-const PRICE_PREMIUM_PLUS = process.env.STRIPE_PRICE_PREMIUM_PLUS!;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  const { plan, email, leadId } = await req.json();
+  try {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const pricePremium = process.env.STRIPE_PRICE_PREMIUM;
+    const pricePremiumPlus = process.env.STRIPE_PRICE_PREMIUM_PLUS;
+    const appUrl = process.env.APP_URL;
 
-  const price =
-    plan === "premium_plus" ? PRICE_PREMIUM_PLUS : PRICE_PREMIUM;
+    if (!stripeSecretKey) {
+      return NextResponse.json(
+        { error: "Missing STRIPE_SECRET_KEY" },
+        { status: 500 }
+      );
+    }
 
-  // Optional: attach metadata for analytics + linking lead to subscription
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer_email: email,
-    line_items: [{ price, quantity: 1 }],
-    success_url: `${process.env.APP_URL}/onboarding?success=1&leadId=${encodeURIComponent(
-      leadId ?? ""
-    )}`,
-    cancel_url: `${process.env.APP_URL}/?canceled=1`,
-    metadata: {
-      leadId: leadId ?? "",
-      plan,
-    },
-  });
+    if (!pricePremium) {
+      return NextResponse.json(
+        { error: "Missing STRIPE_PRICE_PREMIUM" },
+        { status: 500 }
+      );
+    }
 
-  return NextResponse.json({ url: session.url });
+    if (!appUrl) {
+      return NextResponse.json(
+        { error: "Missing APP_URL" },
+        { status: 500 }
+      );
+    }
+
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2026-02-25.clover",
+    });
+
+    const { plan, email, leadId } = await req.json();
+
+    const price =
+      plan === "premium_plus"
+        ? pricePremiumPlus ?? pricePremium
+        : pricePremium;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer_email: email,
+      line_items: [{ price, quantity: 1 }],
+      success_url: `${appUrl}/onboarding?success=1&leadId=${encodeURIComponent(
+        leadId ?? ""
+      )}`,
+      cancel_url: `${appUrl}/?canceled=1`,
+      metadata: {
+        leadId: leadId ?? "",
+        plan: plan ?? "premium",
+      },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (error) {
+    console.error("Stripe checkout error:", error);
+    return NextResponse.json(
+      { error: "Unable to create checkout session" },
+      { status: 500 }
+    );
+  }
 }
