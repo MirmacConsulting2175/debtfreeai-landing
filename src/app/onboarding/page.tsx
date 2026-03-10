@@ -1,10 +1,9 @@
-// app/onboarding/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const sp = useSearchParams();
   const success = sp.get("success") === "1";
 
@@ -27,7 +26,6 @@ export default function OnboardingPage() {
     setBusy(true);
     setMsg(null);
     try {
-      // TODO: send to Spring Boot to persist onboarding settings
       await new Promise((r) => setTimeout(r, 600));
       setMsg("Setup complete. Your first Optimization Checkup is ready.");
     } finally {
@@ -42,28 +40,37 @@ export default function OnboardingPage() {
           {success ? "Welcome to DebtfreeAI" : "Get started"}
         </h1>
         <p className="mt-2 text-slate-600">
-          We’ll set up your repayment operating system: deadlines, tracking, and checkups.
+          We’ll set up your repayment operating system: deadlines, tracking, and
+          checkups.
         </p>
 
         <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
           <div className="grid gap-4">
             <div>
-              <label className="text-xs text-slate-500">Loan servicer (optional)</label>
+              <label className="text-xs text-slate-500">
+                Loan servicer (optional)
+              </label>
               <input
                 className="mt-1 w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
                 value={form.servicer}
-                onChange={(e) => setForm({ ...form, servicer: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, servicer: e.target.value })
+                }
                 placeholder="MOHELA, Aidvantage, Nelnet…"
               />
             </div>
 
             <div>
-              <label className="text-xs text-slate-500">Recertification due date (recommended)</label>
+              <label className="text-xs text-slate-500">
+                Recertification due date (recommended)
+              </label>
               <input
                 type="date"
                 className="mt-1 w-full rounded-2xl border border-slate-300 px-3 py-2 text-sm"
                 value={form.recertDate}
-                onChange={(e) => setForm({ ...form, recertDate: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, recertDate: e.target.value })
+                }
               />
               <p className="mt-1 text-xs text-slate-500">
                 This powers calm reminders (90/60/30 days).
@@ -92,5 +99,13 @@ export default function OnboardingPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading...</div>}>
+      <OnboardingContent />
+    </Suspense>
   );
 }
